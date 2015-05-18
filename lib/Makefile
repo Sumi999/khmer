@@ -37,6 +37,7 @@ PREFIX=/usr/local
 INCLUDES= -I ../third-party/seqan/core/include/ 	\
 	  -I ../third-party/zlib/ 			\
 	  -I ../third-party/bzip2/ 			\
+	  -I ../third-party/zstd/ 			\
 	  -I ../third-party/smhasher/
 
 CXXFLAGS=$(INCLUDES)
@@ -172,6 +173,9 @@ BZIP2_OBJS_BASE= \
 
 BZIP2_OBJS=$(addprefix $(BZIP2_DIR)/, $(BZIP2_OBJS_BASE))
 
+# ZSTD
+ZSTD_DIR=../third-party/zstd
+ZSTD_OBJS=zstd.o
 
 #### khmer proper below here ####
 
@@ -189,7 +193,8 @@ LIBKHMER_OBJS= \
 	trace_logger.o \
 	murmur3.o \
 	$(BZIP2_OBJS) \
-	$(ZLIB_PIC_OBJS)
+	$(ZLIB_PIC_OBJS) \
+	$(ZSTD_OBJS)
 
 KHMER_HEADERS= \
 	counting.hh \
@@ -240,6 +245,9 @@ $(ZLIB_PIC_OBJS):
 
 $(BZIP2_OBJS):
 	(cd $(BZIP2_DIR) && make -f Makefile-libbz2_so $(BZIP2_OBJS_BASE))
+
+$(ZSTD_OBJS):
+	$(CC) -std=c99 -Wall -Wextra -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -fPIC -c $(ZSTD_DIR)/zstd.c
 
 # MurMur3
 murmur3.o: ../third-party/smhasher/MurmurHash3.cc
