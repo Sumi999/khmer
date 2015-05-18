@@ -113,6 +113,8 @@ SOURCES.extend(path_join("lib", bn + ".cc") for bn in [
 SOURCES.extend(path_join("third-party", "smhasher", bn + ".cc") for bn in [
     "MurmurHash3"])
 
+SOURCES.extend([path_join("third-party", "zstd", "zstd.c")])
+
 EXTRA_COMPILE_ARGS = ['-O3', ]
 EXTRA_LINK_ARGS = []
 
