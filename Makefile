@@ -173,7 +173,7 @@ coverage-report: .coverage
 
 coverage-gcovr.xml: coverage-debug .coverage
 	gcovr --root=. --branches --output=coverage-gcovr.xml --xml \
-          --gcov-exclude='.*zlib.*|.*bzip2.*|.*smhasher.*|.*seqan.*'
+          --gcov-exclude='.*third-party.*'
 
 diff-cover: coverage-gcovr.xml coverage.xml
 	diff-cover coverage-gcovr.xml coverage.xml
