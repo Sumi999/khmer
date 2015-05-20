@@ -788,7 +788,7 @@ CountingHashGzFileReader::CountingHashGzFileReader(
 
 CountingHashZstdFileReader::CountingHashZstdFileReader(
     const std::string   &infilename,
-    CountingHash    &ht)
+    CountingHash        &ht)
 {
     ifstream infile;
     // configure ifstream to raise exceptions for everything.
