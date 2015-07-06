@@ -29,7 +29,6 @@ WANT_DEBUGGING=false
 # and are willing to accept the overhead such instrumentation introduces.
 WITH_INTERNAL_METRICS=false
 
-
 PREFIX=/usr/local
 
 ### NOTE: No user-serviceable parts below this line! ###
@@ -40,37 +39,34 @@ INCLUDES= -I ../third-party/seqan/core/include/ 	\
 	  -I ../third-party/zstd/ 			\
 	  -I ../third-party/smhasher/
 
-CXXFLAGS=$(INCLUDES)
-CXX_WARNING_FLAGS=-Wall
-CXX_OPTIMIZATION_FLAGS=-O3
-CXX_SHARED_LIB_FLAGS=-fPIC
-CXXFLAGS+= 				\
-	   $(CXX_WARNING_FLAGS) 	\
-	   $(CXX_OPTIMIZATION_FLAGS)	\
-	   $(CXX_SHARED_LIB_FLAGS)
+# Warnings in common to C and C++
+WARNINGS=-Wall -Wextra -Wundef
 
-CFLAGS=$(INCLUDES)
-C_WARNING_FLAGS=-Wall
-C_OPTIMIZATION_FLAGS=-O3
-C_SHARED_LIB_FLAGS=-fPIC
-CFLAGS+= $(C_WARNING_FLAGS) $(C_OPTIMIZATION_FLAGS) $(C_SHARED_LIB_FLAGS)
+# Debug C/CXXFLAGS
+DEBUG_FLAGS=-g
+
+DEFINE_KHMER_EXTRA_SANITY_CHECKS=-DKHMER_EXTRA_SANITY_CHECKS
+
+# Flags in common to C and C++
+COMMON_FLAGS=-O3 -fPIC -DSEQAN_HAS_ZLIB=1 -DSEQAN_HAS_BZ2=1
+
+# Base C/CXXFLAGS
+CXXFLAGS=$(INCLUDES) $(COMMON_FLAGS) $(WARNINGS)
+CXXFLAGS+= -Wstrict-null-sentinel
+
+CFLAGS=$(INCLUDES) $(COMMON_FLAGS) $(WARNINGS)
+CFLAGS+=-Wshadow -Wcast-align -Wstrict-prototypes
 
 LIBS=
 
 ifeq ($(WANT_DEBUGGING), true)
-CXX_DEBUG_FLAGS=-g
-CXXFLAGS+= $(CXX_DEBUG_FLAGS)
-CFLAGS+= $(CXX_DEBUG_FLAGS)
-else
-CXX_DEBUG_FLAGS=
+CXXFLAGS+= $(DEBUG_FLAGS)
+CFLAGS+= $(DEBUG_FLAGS)
 endif
 
 ifeq ($(WANT_EXTRA_SANITY_CHECKING), true)
-DEFINE_KHMER_EXTRA_SANITY_CHECKS=-DKHMER_EXTRA_SANITY_CHECKS
 CXXFLAGS+= $(DEFINE_KHMER_EXTRA_SANITY_CHECKS)
 CFLAGS+= $(DEFINE_KHMER_EXTRA_SANITY_CHECKS)
-else
-DEFINE_KHMER_EXTRA_SANITY_CHECKS=
 endif
 
 ifeq ($(WANT_PROFILING), true)
@@ -80,12 +76,14 @@ endif
 ifeq ($(PROFILER_OF_CHOICE), gprof)
 PROFILING_LIBS=-pg
 CXXFLAGS+= -pg
+CFLAGS+= -pg
 LIBS+= $(PROFILING_LIBS)
 endif
 endif
 
 ifeq ($(WITH_INTERNAL_METRICS), true)
 CXXFLAGS+= -DWITH_INTERNAL_METRICS
+CFLAGS+= -DWITH_INTERNAL_METRICS
 endif
 
 # Place POSIX threads last in linking order, if needed.
@@ -100,8 +98,8 @@ HAVE_OPENMP=$(shell 						\
 	      rm -f chkomp)
 
 ifeq ($(HAVE_OPENMP), true)
-	CFLAGS += -fopenmp
-	CXXFLAGS += -fopenmp
+	CFLAGS+=-fopenmp
+	CXXFLAGS+=-fopenmp
 endif
 
 VERSION = $(shell python get_version.py)
@@ -113,6 +111,7 @@ CXXFLAGS+= -DVERSION=$(VERSION)
 
 NO_UNIQUE_RC=0
 CXXFLAGS+= -DNO_UNIQUE_RC=$(NO_UNIQUE_RC)
+CFLAGS+= -DNO_UNIQUE_RC=$(NO_UNIQUE_RC)
 
 export CXX
 export CFLAGS
@@ -246,8 +245,8 @@ $(ZLIB_PIC_OBJS):
 $(BZIP2_OBJS):
 	(cd $(BZIP2_DIR) && make -f Makefile-libbz2_so $(BZIP2_OBJS_BASE))
 
-$(ZSTD_OBJS):
-	$(CC) -std=c99 -Wall -Wextra -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -fPIC -c $(ZSTD_DIR)/zstd.c
+$(ZSTD_OBJS): $(ZSTD_DIR)/zstd.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 # MurMur3
 murmur3.o: ../third-party/smhasher/MurmurHash3.cc
